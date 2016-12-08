@@ -8,20 +8,28 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class RCTImageSequenceView extends ImageView {
+public class RCTImageSequenceView extends ImageView implements AnimationDrawableListenable.IAnimationFinishListener {
     private Integer framesPerSecond = 24;
     private ArrayList<AsyncTask> activeTasks;
     private HashMap<Integer, Bitmap> bitmaps;
     private RCTResourceDrawableIdHelper resourceDrawableIdHelper;
 
+    private ReactContext rContext;
+    private final String ON_ANIMATION_FINISHED = "ON_ANIMATION_FINISHED";
+
     public RCTImageSequenceView(Context context) {
         super(context);
+
+        this.rContext = (ReactContext) context;
 
         resourceDrawableIdHelper = new RCTResourceDrawableIdHelper();
     }
@@ -123,7 +131,7 @@ public class RCTImageSequenceView extends ImageView {
     }
 
     private void setupAnimationDrawable() {
-        AnimationDrawable animationDrawable = new AnimationDrawable();
+        AnimationDrawableListenable animationDrawable = new AnimationDrawableListenable();
         for (int index = 0; index < bitmaps.size(); index++) {
             BitmapDrawable drawable = new BitmapDrawable(this.getResources(), bitmaps.get(index));
             animationDrawable.addFrame(drawable, 1000 / framesPerSecond);
@@ -133,5 +141,21 @@ public class RCTImageSequenceView extends ImageView {
         animationDrawable.start();
 
         this.setImageDrawable(animationDrawable);
+    }
+
+    //  Implementing IAnimationFinishListener
+    public void onAnimationFinished() {
+        this.sendEvent(this.rContext, this.ON_ANIMATION_FINISHED);
+    }
+
+//    private void sendEvent(ReactContext reactContext,
+//                           String eventName,
+//                           @Nullable WritableMap params) {
+    private void sendEvent(ReactContext reactContext,
+                           String eventName) {
+        reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, null);
+//                .emit(eventName, params);
     }
 }
