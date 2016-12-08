@@ -137,6 +137,7 @@ public class RCTImageSequenceView extends ImageView implements AnimationDrawable
             animationDrawable.addFrame(drawable, 1000 / framesPerSecond);
         }
 
+        animationDrawable.setAnimationFinishListener(this);
         animationDrawable.setOneShot(false);
         animationDrawable.start();
 
